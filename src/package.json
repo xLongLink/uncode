@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "bun release.ts",
-		"check": "vp check && bun check.ts",
+		"check": "vp check && bash -n setup.sh && bash -n install-release.sh && bun test",
 		"fmt": "vp fmt",
 		"lint": "vp lint",
 		"up": "bun src/cli.ts install",

@@ -1,17 +1,13 @@
 type Recording = { result: Promise<Float32Array>; stop(): void }
-type Job = {
+type Operation = {
 	recording?: Recording
-	done: boolean
-	releasedAt?: number
 	text?: string
 }
 
 export class Dictation {
-	jobs: Job[] = []
-	active: Job | undefined = undefined
+	private pending: Operation | undefined
 	processing = Promise.resolve()
 	retryAt = 0
-	pasteFailed = false
 
 	constructor(
 		public capture: () => Recording,
@@ -20,9 +16,7 @@ export class Dictation {
 	) {}
 
 	start() {
-		if (this.active) return
-		if (this.jobs.length >= 3)
-			return console.info("Dictation queue full; wait for pending transcripts")
+		if (this.pending) return console.info("Dictation busy; wait for the pending transcript")
 		let recording
 		try {
 			recording = this.capture()
@@ -32,88 +26,54 @@ export class Dictation {
 			)
 			return
 		}
-		const job: Job = { recording, done: false }
-		this.active = job
-		this.jobs.push(job)
+		const operation: Operation = { recording }
+		this.pending = operation
 		console.info("Recording (up to 30 seconds); release your dictation key to paste")
-		// Handle capture errors immediately, even while an earlier job is transcribing.
-		const captured = recording.result
-			.then(
-				(audio) => {
-					if (job.releasedAt !== undefined)
-						console.info(
-							`Microphone shutdown: ${Math.round(performance.now() - job.releasedAt)} ms`,
-						)
-					return { audio, error: undefined }
-				},
-				(error: unknown) => ({ audio: undefined, error }),
-			)
-			.finally(() => {
-				job.recording = undefined
+		this.processing = recording.result
+			.then(async (audio) => {
+				if (this.pending !== operation) return
+				operation.recording = undefined
+				operation.text = audio.length ? await this.transcribe(audio) : ""
 			})
-		this.processing = this.processing.then(async () => {
-			try {
-				const { audio, error } = await captured
-				if (error) throw error
-				if (!audio) throw new Error("Capture returned no audio")
-				const started = performance.now()
-				job.text = audio.length ? await this.transcribe(audio) : ""
-				console.info(
-					`Native transcription: ${Math.round(performance.now() - started)} ms (${(audio.length / 16000).toFixed(1)} s audio)`,
-				)
-			} catch (error) {
+			.catch((error: unknown) => {
+				if (this.pending === operation) this.pending = undefined
 				console.error(
 					`Dictation failed: ${error instanceof Error ? error.message : String(error)}`,
 				)
-			} finally {
-				job.done = true
-			}
-		})
+			})
 	}
 
 	stop() {
-		if (!this.active) return
-		const job = this.active
-		this.active = undefined
-		job.releasedAt = performance.now()
-		job.recording?.stop()
+		this.pending?.recording?.stop()
 	}
 
 	flush(keysHeld: boolean) {
 		if (keysHeld || performance.now() < this.retryAt) return
-		const ready = []
-		while (this.jobs[0]?.done) {
-			const job = this.jobs.shift()!
-			if (job.text === undefined) continue
-			if (!job.text) {
-				console.info("No speech detected")
-				continue
-			}
-			ready.push(job)
+		const text = this.pending?.text
+		if (text === undefined) return
+		if (!text) {
+			this.pending = undefined
+			console.info("No speech detected")
+			return
 		}
-		if (!ready.length) return
 		try {
-			// One clipboard update prevents queued pastes from reading a later transcript.
-			this.paste(ready.map((job) => job.text).join(" "))
-			this.pasteFailed = false
+			this.paste(text)
+			this.pending = undefined
 			this.retryAt = 0
-			const releasedAt = ready[0].releasedAt
-			console.info(
-				`Pasted transcript${releasedAt === undefined ? "" : ` (${Math.round(performance.now() - releasedAt)} ms after release)`}`,
-			)
+			console.info("Pasted transcript")
 		} catch (error) {
-			this.jobs.unshift(...ready)
+			const retrying = this.retryAt !== 0
 			this.retryAt = performance.now() + 1000
-			if (!this.pasteFailed)
+			if (!retrying)
 				console.error(
 					`Paste failed; will retry: ${error instanceof Error ? error.message : String(error)}`,
 				)
-			this.pasteFailed = true
 		}
 	}
 
 	close() {
-		this.jobs.forEach((job) => job.recording?.stop())
-		this.active = undefined
+		const operation = this.pending
+		this.pending = undefined
+		operation?.recording?.stop()
 	}
 }

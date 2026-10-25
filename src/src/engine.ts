@@ -11,11 +11,16 @@ const engineRevision = "93e88ede867e4311c39151285e74df513e4b835b"
 const modelRevision = "ca5287601bef25af26dcf2e1b2bdc0843a7c19e5"
 const root = dirname(import.meta.dir)
 
-export async function createEngine(
-	directory = Bun.isStandaloneExecutable
+async function writeAtomic(path: string, bytes: Uint8Array | ArrayBuffer) {
+	const partial = `${path}.${process.pid}.partial`
+	await Bun.write(partial, bytes)
+	await rename(partial, path)
+}
+
+export async function createEngine() {
+	const directory = Bun.isStandaloneExecutable
 		? join(process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"), "uncode")
-		: join(root, ".cache"),
-) {
+		: join(root, ".cache")
 	if (process.platform !== "linux" || !["x64", "arm64"].includes(process.arch))
 		throw new Error("Native Whistle supports Ubuntu/Debian on x86_64 or ARM64")
 	if (!(await Bun.file(model).exists())) throw new Error("Bundled Whistle model is missing")
@@ -32,8 +37,7 @@ export async function createEngine(
 		if (!response.ok) throw new Error(`Whistle download failed: HTTP ${response.status}`)
 		const bytes = new Uint8Array(await response.arrayBuffer())
 		if (!bytes.length) throw new Error(`Empty Whistle asset: ${wheel}`)
-		await Bun.write(`${wheelFile}.${process.pid}.partial`, bytes)
-		await rename(`${wheelFile}.${process.pid}.partial`, wheelFile)
+		await writeAtomic(wheelFile, bytes)
 	}
 	const library = join(folder, `libneedle3-${arch}.so`)
 	if (!(await Bun.file(library).exists())) {
@@ -50,8 +54,7 @@ export async function createEngine(
 			throw new Error(
 				`Unable to extract native Whistle library: ${error.trim() || `exit ${code}`}`,
 			)
-		await Bun.write(`${library}.${process.pid}.partial`, bytes)
-		await rename(`${library}.${process.pid}.partial`, library)
+		await writeAtomic(library, bytes)
 	}
 	const worker = new Worker(new URL("./transcribe.ts", import.meta.url), {
 		workerData: { library, model },
@@ -61,9 +64,9 @@ export async function createEngine(
 		throw error
 	})
 	return {
-		async transcribe(audio: Float32Array, language: string | null = null) {
+		async transcribe(this: void, audio: Float32Array) {
 			const result = once(worker, "message")
-			worker.postMessage({ audio, language })
+			worker.postMessage({ audio })
 			const [response] = await result
 			if (response.error) throw new Error(response.error)
 			if (typeof response.text !== "string")

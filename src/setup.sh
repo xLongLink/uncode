@@ -90,7 +90,6 @@ if [[ ! -r "$keyboard" || ! -w /dev/uinput ]]; then
 fi
 "${runner[@]}" setup check "$keyboard" "$keycode"
 
-mkdir -p "$(dirname "$unit")"
 "${runner[@]}" setup configure "$keyboard" "$config" "$unit" "$keycode"
 for name in WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_CONFIG_HOME; do
     if [[ -v "$name" ]]; then systemctl --user import-environment "$name"; fi

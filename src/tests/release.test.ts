@@ -52,7 +52,7 @@ test("compiled release works without Bun, source files, or the working directory
 		expect(detected.stderr.toString()).toContain("Press the key you want")
 		const configure = run("setup", "configure", keyboard, config, unit, "58")
 		expect(configure.exitCode).toBe(0)
-		expect(await Bun.file(config).json()).toEqual({ keyboard, keycode: 58, language: null })
+		expect(await Bun.file(config).json()).toEqual({ keyboard, keycode: 58 })
 		const service = await Bun.file(unit).text()
 		expect(service).toContain(`ExecStart="${executable}" "start"`)
 		expect(service).not.toContain(".ts")
@@ -66,7 +66,7 @@ test("compiled release works without Bun, source files, or the working directory
 		if (process.getuid?.() !== 0) {
 			const tools = join(directory, "tools")
 			await mkdir(tools)
-			for (const command of ["bash", "dirname", "rm"]) {
+			for (const command of ["bash", "rm"]) {
 				const path = Bun.which(command)
 				if (!path) throw new Error(`Missing test command: ${command}`)
 				await symlink(path, join(tools, command))

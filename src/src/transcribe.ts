@@ -18,14 +18,13 @@ const output = Buffer.alloc(262144)
 if (!parentPort) throw new Error("Transcription must run in a worker")
 const port = parentPort
 
-port.on("message", ({ audio, language }: { audio: Float32Array; language: string | null }) => {
-	const locale = new TextEncoder().encode((language ?? "") + "\0")
+port.on("message", ({ audio }: { audio: Float32Array }) => {
 	try {
 		if (
 			library.symbols.needle_transcribe(
 				audio.length ? ptr(audio) : null,
 				audio.length,
-				language ? ptr(locale) : null,
+				null,
 				null,
 				0,
 				ptr(output),

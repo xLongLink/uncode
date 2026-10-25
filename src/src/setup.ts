@@ -47,7 +47,7 @@ export async function runSetup(action: string, args: string[]) {
 	command.push("start")
 	await mkdir(dirname(config), { recursive: true })
 	await mkdir(dirname(unit), { recursive: true })
-	await Bun.write(config, JSON.stringify({ keyboard, keycode, language: null }, null, 2) + "\n")
+	await Bun.write(config, JSON.stringify({ keyboard, keycode }, null, 2) + "\n")
 	await Bun.write(
 		unit,
 		`[Unit]

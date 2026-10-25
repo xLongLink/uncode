@@ -16,7 +16,6 @@ test("source setup creates a service using Bun and the CLI entrypoint", async ()
 		expect(await Bun.file(config).json()).toEqual({
 			keyboard: "/dev/input/by-id/keyboard-event-kbd",
 			keycode: 58,
-			language: null,
 		})
 		for (const code of ["0", "768", "-1", "1.5", "invalid", ""]) {
 			await expect(

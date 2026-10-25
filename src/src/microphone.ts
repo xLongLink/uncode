@@ -51,6 +51,11 @@ function captureMicrophone() {
 		killTimer = setTimeout(() => child.kill("SIGKILL"), 1000)
 	}
 	const timer = setTimeout(stop, 30000)
+	const cleanup = () => {
+		closed = true
+		clearTimeout(timer)
+		clearTimeout(killTimer)
+	}
 	const result = new Promise<Float32Array>((resolve, reject) => {
 		child.stdout.on("data", (chunk) => {
 			const bytes = chunk.subarray(0, maxBytes - length)
@@ -62,15 +67,11 @@ function captureMicrophone() {
 			stderr = (stderr + chunk.toString()).slice(-4000)
 		})
 		child.once("error", (error) => {
-			closed = true
-			clearTimeout(timer)
-			clearTimeout(killTimer)
+			cleanup()
 			reject(error)
 		})
 		child.once("close", (code, signal) => {
-			closed = true
-			clearTimeout(timer)
-			clearTimeout(killTimer)
+			cleanup()
 			if (!stopped && (code !== 0 || signal))
 				return reject(
 					new Error(`Microphone failed: ${stderr.trim() || signal || `exit ${code}`}`),

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { decodeEvents, encodeEvent } from "../src/keyboard.ts"
+import { decodeEvents, decodeKeyBitmap, encodeEvent } from "../src/keyboard.ts"
 import { decodePCM } from "../src/microphone.ts"
 
 test("Linux input events preserve key presses, repeats, releases and synchronization", () => {
@@ -14,6 +14,19 @@ test("Linux input events preserve key presses, repeats, releases and synchroniza
 
 test("incomplete Linux input events are rejected", () => {
 	expect(() => decodeEvents(Buffer.alloc(23))).toThrow("Incomplete Linux input event")
+})
+
+test("empty key bitmaps have no enabled keys", () => {
+	expect(decodeKeyBitmap(Buffer.alloc(0))).toEqual([])
+	expect(decodeKeyBitmap(Buffer.alloc(96))).toEqual([])
+})
+
+test("key bitmaps decode byte boundaries and the highest key in ascending order", () => {
+	const bytes = Buffer.alloc(96)
+	bytes[0] = 0x81
+	bytes[1] = 0x01
+	bytes[95] = 0x80
+	expect(decodeKeyBitmap(bytes)).toEqual([0, 7, 8, 767])
 })
 
 test("PCM16 is normalized to mono float samples for Whistle", () => {

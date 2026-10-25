@@ -1,13 +1,13 @@
 import { key, type InputEvent } from "./hotkey.ts"
 
 export function pasteText(text: string, emit: (event: InputEvent) => void) {
-	const started = performance.now()
+	const bytes = Buffer.from(text)
 	// Clipboard is required; primary selection is optional on some compositors.
 	for (const selection of [[], ["--primary"]]) {
 		const result = Bun.spawnSync(
 			["wl-copy", ...selection, "--type", "text/plain;charset=utf-8"],
 			{
-				stdin: Buffer.from(text),
+				stdin: bytes,
 				stdout: "ignore",
 				// wl-copy's clipboard owner inherits stderr; do not wait for its pipe.
 				stderr: "ignore",
@@ -24,5 +24,4 @@ export function pasteText(text: string, emit: (event: InputEvent) => void) {
 			emit({ type: 1, code, value })
 		emit({ type: 0, code: 0, value: 0 })
 	}
-	console.info(`Clipboard/paste: ${Math.round(performance.now() - started)} ms`)
 }

@@ -6,7 +6,6 @@ export class Hotkey {
 	pressed = new Set<number>()
 	pending: InputEvent[] = []
 	hidden = new Set<number>()
-	active = false
 	dropped = false
 
 	constructor(
@@ -28,19 +27,16 @@ export class Hotkey {
 		if (event.type === 0) return this.emit(event)
 		// Forward keys and synchronization only, not hardware scan codes.
 		if (event.type !== 1) return
+		const pressed = this.pressed.has(event.code)
 		if (event.value === 1) this.pressed.add(event.code)
 		if (event.value === 0) this.pressed.delete(event.code)
 		if (event.code === this.keycode) {
-			if (event.value === 1 && !this.active) {
+			if (event.value === 1 && !pressed) {
 				this.pending.forEach((item) => this.hidden.add(item.code))
 				this.pending = []
-				this.active = true
 				this.start()
 			}
-			if (event.value === 0 && this.active) {
-				this.active = false
-				this.stop()
-			}
+			if (event.value === 0 && pressed) this.stop()
 			return
 		}
 		if (this.hidden.has(event.code)) {

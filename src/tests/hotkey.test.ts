@@ -53,7 +53,7 @@ test("custom hotkey recovers a missed release from physical key state", () => {
 	const result = scenario([[58, 1]], 58)
 	result.hotkey.reconcile(new Set())
 	expect(result.actions).toEqual(["start", "stop"])
-	expect(result.hotkey.active).toBe(false)
+	expect(result.hotkey.pressed.has(58)).toBe(false)
 	expect(result.events).toEqual([{ type: 0, code: 0, value: 0 }])
 })
 
@@ -80,6 +80,31 @@ test("bare F23 works and repeated keydown does not restart recording", () => {
 	])
 	expect(result.actions).toEqual(["start", "stop"])
 	expect(result.events).toEqual([])
+})
+
+test("orphan hotkey releases and repeats do not start or stop recording", () => {
+	const result = scenario([
+		[key.copilot, 0],
+		[key.copilot, 2],
+		[key.copilot, 0],
+	])
+	expect(result.actions).toEqual([])
+	expect(result.events).toEqual([])
+	expect(result.hotkey.pressed.size).toBe(0)
+})
+
+test("duplicate keydown starts once and only a held hotkey release stops recording", () => {
+	const result = scenario([
+		[key.copilot, 1],
+		[key.copilot, 1],
+	])
+	expect(result.actions).toEqual(["start"])
+	expect(result.hotkey.pressed.has(key.copilot)).toBe(true)
+	result.hotkey.feed({ type: 1, code: key.copilot, value: 0 })
+	result.hotkey.feed({ type: 1, code: key.copilot, value: 0 })
+	expect(result.actions).toEqual(["start", "stop"])
+	expect(result.events).toEqual([])
+	expect(result.hotkey.pressed.size).toBe(0)
 })
 
 test("normal modifier shortcuts are forwarded in order", () => {
@@ -145,7 +170,6 @@ test("physical key state recovers a missed Copilot and modifier release", () => 
 	])
 	result.hotkey.reconcile(new Set())
 	expect(result.actions).toEqual(["start", "stop"])
-	expect(result.hotkey.active).toBe(false)
 	expect(result.hotkey.pressed.size).toBe(0)
 	expect(result.hotkey.hidden.size).toBe(0)
 })

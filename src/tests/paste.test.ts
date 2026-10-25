@@ -39,9 +39,10 @@ afterEach(async () => {
 
 test("copies both selections before emitting Shift+Insert", async () => {
 	const events: InputEvent[] = []
-	pasteText("spoken text", (event) => events.push(event))
-	expect(await Bun.file(`${directory}/clipboard`).text()).toBe("spoken text")
-	expect(await Bun.file(`${directory}/primary`).text()).toBe("spoken text")
+	const text = "spoken text — café 🎙️"
+	pasteText(text, (event) => events.push(event))
+	expect(await Bun.file(`${directory}/clipboard`).text()).toBe(text)
+	expect(await Bun.file(`${directory}/primary`).text()).toBe(text)
 	expect(events).toEqual([
 		{ type: 1, code: key.shift, value: 1 },
 		{ type: 1, code: key.insert, value: 1 },

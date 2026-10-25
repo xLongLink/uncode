@@ -20,6 +20,12 @@ export function encodeEvent(event: InputEvent) {
 	return bytes
 }
 
+export function decodeKeyBitmap(bytes: Buffer) {
+	return Array.from({ length: bytes.length * 8 }, (_, code) => code).filter(
+		(code) => bytes[code >> 3] & (1 << (code & 7)),
+	)
+}
+
 export function openKeyboard(device: string, checkOnly?: false, keycode?: number): Keyboard
 export function openKeyboard(device: string, checkOnly: true, keycode?: number): undefined
 export function openKeyboard(device: string, checkOnly = false, keycode = key.copilot) {
@@ -55,9 +61,7 @@ export function openKeyboard(device: string, checkOnly = false, keycode = key.co
 	ioctl(output, 0x40045564, 1) // UI_SET_EVBIT(EV_KEY)
 	codes[key.shift >> 3] |= 1 << (key.shift & 7)
 	codes[key.insert >> 3] |= 1 << (key.insert & 7)
-	Array.from({ length: codes.length * 8 }, (_, code) => code)
-		.filter((code) => codes[code >> 3] & (1 << (code & 7)))
-		.forEach((code) => ioctl(output, 0x40045565, code)) // UI_SET_KEYBIT
+	decodeKeyBitmap(codes).forEach((code) => ioctl(output, 0x40045565, code)) // UI_SET_KEYBIT
 	const setup = Buffer.alloc(92)
 	setup.writeUInt16LE(3) // BUS_USB
 	setup.writeUInt16LE(1, 2)
@@ -80,11 +84,7 @@ export function openKeyboard(device: string, checkOnly = false, keycode = key.co
 		pressedKeys() {
 			const state = Buffer.alloc(96)
 			ioctl(keyboard, 0x80604518, ptr(state)) // EVIOCGKEY(96)
-			return new Set(
-				Array.from({ length: state.length * 8 }, (_, code) => code).filter(
-					(code) => state[code >> 3] & (1 << (code & 7)),
-				),
-			)
+			return new Set(decodeKeyBitmap(state))
 		},
 		emit(event: InputEvent) {
 			writeSync(output, encodeEvent(event))

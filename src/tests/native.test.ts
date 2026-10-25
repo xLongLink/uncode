@@ -14,7 +14,7 @@ test.skipIf(process.env.VOICE_NATIVE_TEST !== "1")(
 		const engine = await createEngine()
 		try {
 			expect(await engine.transcribe(new Float32Array(16000))).toBe("")
-			expect(await engine.transcribe(new Float32Array(32000), "en")).toBe("")
+			expect(await engine.transcribe(new Float32Array(32000))).toBe("")
 		} finally {
 			await engine.close()
 		}

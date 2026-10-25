@@ -8,7 +8,7 @@
 Local voice dictation for your desktop.
 </h3 >
 
-Choose any key during installation. Hold it to record; release to transcribe locally and paste. Powered by [Needle 3](https://cactuscompute.com/needle) with the bundled 16.9 MB [Whistle speech model](https://huggingface.co/Cactus-Compute/whistle). Never submits the text.
+Hold Copilot to record; release to transcribe locally and paste. Powered by [Whistle](https://cactuscompute.com/blog/whistle) (16.9 MB).
 
 [![Release](https://img.shields.io/github/v/release/xLongLink/uncode)](https://github.com/xLongLink/uncode/releases/latest)
 [![Release workflow](https://github.com/xLongLink/uncode/actions/workflows/release.yml/badge.svg)](https://github.com/xLongLink/uncode/actions/workflows/release.yml)

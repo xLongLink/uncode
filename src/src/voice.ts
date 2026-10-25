@@ -14,19 +14,14 @@ const config = await Bun.file(
 if (
 	typeof config.keyboard !== "string" ||
 	(config.keycode !== undefined &&
-		(!Number.isInteger(config.keycode) || config.keycode < 1 || config.keycode >= 768)) ||
-	![null, undefined, "en", "de", "fr", "es", "it", "nl", "pl"].includes(config.language)
+		(!Number.isInteger(config.keycode) || config.keycode < 1 || config.keycode >= 768))
 )
-	throw new Error(
-		"Invalid voice config: expected keyboard path, key code, and supported language (or null)",
-	)
+	throw new Error("Invalid voice config: expected keyboard path and key code")
 const engine = await createEngine()
 const keycode = config.keycode ?? key.copilot
 const keyboard = openKeyboard(config.keyboard, false, keycode)
-const dictation = new Dictation(
-	captureAudio,
-	(audio) => engine.transcribe(audio, config.language),
-	(text) => pasteText(text, keyboard.emit),
+const dictation = new Dictation(captureAudio, engine.transcribe, (text) =>
+	pasteText(text, keyboard.emit),
 )
 const hotkey = new Hotkey(
 	keyboard.emit,
