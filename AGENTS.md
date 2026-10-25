@@ -1,8 +1,8 @@
 # Agent Instructions
 
-This repository contains standalone `text/` and `voice/` integrations, not an
-OpenCode runtime or CLI fork. Text installs and uses the upstream Pi executable.
-Do not reintroduce bundled runtime packages or alter installed OpenCode data.
+This repository contains a standalone voice integration in `src/`, not an OpenCode
+runtime or CLI fork. Do not reintroduce bundled runtime packages or alter
+installed OpenCode data.
 
 ## Style
 
@@ -17,8 +17,8 @@ Do not reintroduce bundled runtime packages or alter installed OpenCode data.
 
 ## Checks
 
-- Run `bun run check` from the repository root.
-- Run tests from `text/` or `voice/`, never directly from the root.
+- Run `make check` from the repository root.
+- Run tests from `src/`, never directly from the root.
 - Tests exercise the real implementation and do not contact AI providers.
-- Use `VOICE_NATIVE_TEST=1 bun test` inside `voice/` for actual native inference.
+- Use `VOICE_NATIVE_TEST=1 bun test` inside `src/` for actual native inference.
 - Keep Make targets in the repository-root Makefile only; run integration tests in their respective folders.

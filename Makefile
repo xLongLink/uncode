@@ -1,37 +1,22 @@
-.PHONY: up down up\:text down\:text up\:voice down\:voice test test\:text test\:voice check build build\:text build\:voice
+.PHONY: up down test check build fmt lint
 
 build:
-	bun run build
+	bun run --cwd src build
 
-build\:text:
-	bun run build:text
+up:
+	bun run --cwd src up
 
-build\:voice:
-	bun run build:voice
+down:
+	bun run --cwd src down
 
-up: up\:text up\:voice
-
-down: down\:text down\:voice
-
-up\:text:
-	bun run up:text
-
-down\:text:
-	bun run down:text
-
-up\:voice:
-	bun run up:voice
-
-down\:voice:
-	bun run down:voice
-
-test: test\:text test\:voice
-
-test\:text:
-	bun run test:text
-
-test\:voice:
-	bun run test:voice
+test:
+	bun run --cwd src test
 
 check:
-	bun run check
+	bun run --cwd src check
+
+fmt:
+	bun run --cwd src fmt
+
+lint:
+	bun run --cwd src lint

@@ -12,5 +12,5 @@ __pycache__/
 logs/
 *~
 
-# Preserve private local development files outside the standalone integrations.
+# Preserve private local development files.
 /.dev/

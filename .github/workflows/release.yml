@@ -16,30 +16,39 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.3"
-      - run: bun install --frozen-lockfile
-      - run: bun install --cwd text --frozen-lockfile
-      - run: bun install --cwd voice --frozen-lockfile
-      - run: bun run check
+      - run: bun install --cwd src --frozen-lockfile
+      - run: make check
 
   build:
     needs: check
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        integration: [text, voice]
+        include:
+          - arch: x64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.3"
-      - name: Build integration archive
-        run: bun run build:${{ matrix.integration }} "$RELEASE_TAG"
+      - name: Build standalone executable
+        run: bun run --cwd src build "$RELEASE_TAG" dist "$RELEASE_ARCH"
         env:
           RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_ARCH: ${{ matrix.arch }}
+      - name: Check executable
+        run: '"src/dist/uncode-linux-$RELEASE_ARCH" --version'
+        env:
+          RELEASE_ARCH: ${{ matrix.arch }}
       - uses: actions/upload-artifact@v4
         with:
-          name: uncode-${{ matrix.integration }}
-          path: ${{ matrix.integration }}/dist/*
+          name: uncode-${{ matrix.arch }}
+          path: |
+            src/dist/uncode-linux-${{ matrix.arch }}*
+            src/dist/install.sh
           if-no-files-found: error
 
   release:

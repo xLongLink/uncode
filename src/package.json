@@ -1,0 +1,21 @@
+{
+	"name": "uncode-voice",
+	"private": true,
+	"license": "Apache-2.0",
+	"type": "module",
+	"scripts": {
+		"build": "bun release.ts",
+		"check": "vp check && bun check.ts",
+		"fmt": "vp fmt",
+		"lint": "vp lint",
+		"up": "bun src/cli.ts install",
+		"down": "bun src/cli.ts uninstall",
+		"start": "bun src/cli.ts start",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.3",
+		"vite-plus": "1.1.0"
+	},
+	"packageManager": "bun@1.4.3"
+}
