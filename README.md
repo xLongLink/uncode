@@ -8,11 +8,10 @@
 Local voice dictation for your desktop.
 </h3 >
 
-Hold Copilot to record; release to transcribe locally and paste. Never submits the text.
+Choose any key during installation. Hold it to record; release to transcribe locally and paste. Powered by [Needle 3](https://cactuscompute.com/needle) with the bundled 16.9 MB [Whistle speech model](https://huggingface.co/Cactus-Compute/whistle). Never submits the text.
 
 [![Release](https://img.shields.io/github/v/release/xLongLink/uncode)](https://github.com/xLongLink/uncode/releases/latest)
 [![Release workflow](https://github.com/xLongLink/uncode/actions/workflows/release.yml/badge.svg)](https://github.com/xLongLink/uncode/actions/workflows/release.yml)
-[![Bun](https://img.shields.io/badge/runtime-Bun-14151a)](https://bun.sh)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 
@@ -22,7 +21,6 @@ Hold Copilot to record; release to transcribe locally and paste. Never submits t
 
 ## Install
 
-Bun and Node.js are not required:
 
 ```sh
 curl -fsSL https://github.com/xLongLink/uncode/releases/latest/download/install.sh | bash

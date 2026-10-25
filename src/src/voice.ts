@@ -2,7 +2,7 @@ import { homedir } from "node:os"
 import { join } from "node:path"
 import { createEngine } from "./engine.ts"
 import { Dictation } from "./dictation.ts"
-import { Copilot } from "./hotkey.ts"
+import { Hotkey, key } from "./hotkey.ts"
 import { openKeyboard } from "./keyboard.ts"
 import { captureAudio } from "./microphone.ts"
 import { pasteText } from "./paste.ts"
@@ -13,20 +13,26 @@ const config = await Bun.file(
 ).json()
 if (
 	typeof config.keyboard !== "string" ||
+	(config.keycode !== undefined &&
+		(!Number.isInteger(config.keycode) || config.keycode < 1 || config.keycode >= 768)) ||
 	![null, undefined, "en", "de", "fr", "es", "it", "nl", "pl"].includes(config.language)
 )
-	throw new Error("Invalid voice config: expected keyboard path and supported language (or null)")
+	throw new Error(
+		"Invalid voice config: expected keyboard path, key code, and supported language (or null)",
+	)
 const engine = await createEngine()
-const keyboard = openKeyboard(config.keyboard)
+const keycode = config.keycode ?? key.copilot
+const keyboard = openKeyboard(config.keyboard, false, keycode)
 const dictation = new Dictation(
 	captureAudio,
 	(audio) => engine.transcribe(audio, config.language),
 	(text) => pasteText(text, keyboard.emit),
 )
-const hotkey = new Copilot(
+const hotkey = new Hotkey(
 	keyboard.emit,
 	() => dictation.start(),
 	() => dictation.stop(),
+	keycode,
 )
 
 // Allow the compositor to discover the new virtual keyboard before taking over.
@@ -51,4 +57,4 @@ function shutdown() {
 process.once("exit", shutdown)
 process.once("SIGTERM", () => process.exit(0))
 process.once("SIGINT", () => process.exit(0))
-console.info("Ready: hold Copilot, speak, then release")
+console.info(`Ready: hold your dictation key (code ${keycode}), speak, then release`)

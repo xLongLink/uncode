@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test"
 import { Dictation } from "../src/dictation.ts"
-import { Copilot, key } from "../src/hotkey.ts"
+import { Hotkey, key } from "../src/hotkey.ts"
 
 let info: ReturnType<typeof spyOn<typeof console, "info">>
 let error: ReturnType<typeof spyOn<typeof console, "error">>
@@ -46,7 +46,7 @@ function session(
 		transcribe,
 		paste ?? ((text) => pasted.push(text)),
 	)
-	const hotkey = new Copilot(
+	const hotkey = new Hotkey(
 		() => {},
 		() => dictation.start(),
 		() => dictation.stop(),

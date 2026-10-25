@@ -60,12 +60,12 @@ if [[ "${#keyboards[@]}" == 0 ]]; then
     exit 1
 fi
 if [[ -n "${VOICE_KEYBOARD:-}" ]]; then
-    keyboard="$VOICE_KEYBOARD"
-else
-    # Read only during detection; do not grant access to every keyboard.
-    keyboard="$(sudo "${runner[@]}" setup detect "${keyboards[@]}")"
-    printf 'Detected Copilot keyboard: %s\n' "$keyboard"
+    keyboards=("$VOICE_KEYBOARD")
 fi
+# Read only during detection; do not grant access to every keyboard.
+selection="$(sudo "${runner[@]}" setup detect "${keyboards[@]}")"
+IFS=$'\t' read -r keyboard keycode <<< "$selection"
+printf 'Selected keyboard: %s (key code %s)\n' "$keyboard" "$keycode"
 case "$keyboard" in
     /dev/input/by-id/*-event-kbd|/dev/input/by-path/*-event-kbd) ;;
     *) printf 'VOICE_KEYBOARD must be a stable event-kbd device path.\n' >&2; exit 1 ;;
@@ -88,14 +88,14 @@ if [[ ! -r "$keyboard" || ! -w /dev/uinput ]]; then
     printf 'Device access not yet active. Log out/in, then rerun the install command.\n' >&2
     exit 1
 fi
-"${runner[@]}" setup check "$keyboard"
+"${runner[@]}" setup check "$keyboard" "$keycode"
 
 mkdir -p "$(dirname "$unit")"
-"${runner[@]}" setup configure "$keyboard" "$config" "$unit"
+"${runner[@]}" setup configure "$keyboard" "$config" "$unit" "$keycode"
 for name in WAYLAND_DISPLAY DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_CONFIG_HOME; do
     if [[ -v "$name" ]]; then systemctl --user import-environment "$name"; fi
 done
 systemctl --user daemon-reload
 systemctl --user enable --now uncode-voice.service
-printf 'Voice installed. Hold Copilot, speak, release to paste.\n'
+printf 'Voice installed. Hold your selected key, speak, release to paste.\n'
 printf 'Status/logs: journalctl --user -u uncode-voice.service -f\n'

@@ -16,19 +16,24 @@ export async function runSetup(action: string, args: string[]) {
 		console.info("Whistle ready (TypeScript + native CPU engine)")
 		return
 	}
-	if (action === "check" && args.length === 1) {
-		openKeyboard(args[0], true)
+	if (action === "check" && args.length === 2) {
+		const keycode = Number(args[1])
+		if (!Number.isInteger(keycode) || keycode < 1 || keycode >= 768)
+			throw new Error("Invalid dictation key code")
+		openKeyboard(args[0], true, keycode)
 		return
 	}
 	if (action === "detect" && args.length) {
-		console.error(
-			"Press the Copilot key on the keyboard you want to use (within 30 seconds)...",
-		)
-		console.info(await detectKeyboard(args))
+		console.error("Press the key you want to hold for dictation (within 30 seconds)...")
+		const { keyboard, keycode } = await detectKeyboard(args)
+		console.info(`${keyboard}\t${keycode}`)
 		return
 	}
-	if (action !== "configure" || args.length !== 3) throw new Error("Invalid voice setup command")
-	const [keyboard, config, unit] = args
+	if (action !== "configure" || args.length !== 4) throw new Error("Invalid voice setup command")
+	const [keyboard, config, unit, code] = args
+	const keycode = Number(code)
+	if (!Number.isInteger(keycode) || keycode < 1 || keycode >= 768)
+		throw new Error("Invalid dictation key code")
 	const quote = (value: string) =>
 		`"${value
 			.replaceAll("\\", "\\\\")
@@ -42,11 +47,11 @@ export async function runSetup(action: string, args: string[]) {
 	command.push("start")
 	await mkdir(dirname(config), { recursive: true })
 	await mkdir(dirname(unit), { recursive: true })
-	await Bun.write(config, JSON.stringify({ keyboard, language: null }, null, 2) + "\n")
+	await Bun.write(config, JSON.stringify({ keyboard, keycode, language: null }, null, 2) + "\n")
 	await Bun.write(
 		unit,
 		`[Unit]
-Description=Local Whistle Copilot-key dictation
+Description=Local Whistle voice dictation
 PartOf=graphical-session.target
 After=graphical-session.target
 

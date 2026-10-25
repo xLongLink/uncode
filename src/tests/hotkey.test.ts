@@ -1,17 +1,61 @@
 import { expect, test } from "bun:test"
-import { Copilot, key, type InputEvent } from "../src/hotkey.ts"
+import { Hotkey, key, type InputEvent } from "../src/hotkey.ts"
 
-function scenario(keys: number[][]) {
+function scenario(keys: number[][], keycode = key.copilot) {
 	const events: InputEvent[] = []
 	const actions: string[] = []
-	const hotkey = new Copilot(
+	const hotkey = new Hotkey(
 		events.push.bind(events),
 		() => actions.push("start"),
 		() => actions.push("stop"),
+		keycode,
 	)
 	keys.forEach(([code, value]) => hotkey.feed({ type: 1, code, value }))
 	return { events, actions, hotkey }
 }
+
+test.each([30, 58, key.shift, key.super, key.insert])(
+	"selected key %i records without forwarding its presses or repeats",
+	(keycode) => {
+		const result = scenario(
+			[
+				[keycode, 1],
+				[keycode, 2],
+				[keycode, 0],
+			],
+			keycode,
+		)
+		expect(result.actions).toEqual(["start", "stop"])
+		expect(result.events).toEqual([])
+		expect(result.hotkey.pressed.size).toBe(0)
+	},
+)
+
+test("custom hotkey preserves modifiers and forwards Copilot normally", () => {
+	const keys = [
+		[key.shift, 1],
+		[key.super, 1],
+		[30, 1],
+		[key.copilot, 1],
+		[key.copilot, 0],
+		[30, 0],
+		[key.super, 0],
+		[key.shift, 0],
+	]
+	const result = scenario(keys, 30)
+	expect(result.actions).toEqual(["start", "stop"])
+	expect(result.events.map((event) => [event.code, event.value])).toEqual(
+		keys.filter(([code]) => code !== 30),
+	)
+})
+
+test("custom hotkey recovers a missed release from physical key state", () => {
+	const result = scenario([[58, 1]], 58)
+	result.hotkey.reconcile(new Set())
+	expect(result.actions).toEqual(["start", "stop"])
+	expect(result.hotkey.active).toBe(false)
+	expect(result.events).toEqual([{ type: 0, code: 0, value: 0 }])
+})
 
 test("Copilot chord is hidden; recording lasts until F23 release", () => {
 	const result = scenario([

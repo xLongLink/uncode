@@ -1,6 +1,5 @@
 import { closeSync, constants, openSync, readSync, realpathSync } from "node:fs"
 import { decodeEvents } from "./keyboard.ts"
-import { key } from "./hotkey.ts"
 
 export async function detectKeyboard(devices: string[], timeout = 30000) {
 	const keyboards: { device: string; fd: number }[] = []
@@ -35,18 +34,16 @@ export async function detectKeyboard(devices: string[], timeout = 30000) {
 					throw error
 				}
 				const events = decodeEvents(bytes.subarray(0, length))
-				if (
-					events.some(
-						(event) =>
-							event.type === 1 && event.code === key.copilot && event.value === 1,
-					)
+				const press = events.find(
+					(event) =>
+						event.type === 1 && event.code > 0 && event.code < 768 && event.value === 1,
 				)
-					return device
+				if (press) return { keyboard: device, keycode: press.code }
 			}
 			await Bun.sleep(10)
 		}
 		throw new Error(
-			"No Copilot press detected within 30 seconds. Try again or set VOICE_KEYBOARD explicitly",
+			"No key press detected. Run installation again and press your preferred key",
 		)
 	} finally {
 		keyboards.forEach(({ fd }) => closeSync(fd))

@@ -2,7 +2,7 @@ export type InputEvent = { type: number; code: number; value: number }
 
 export const key = { shift: 42, insert: 110, super: 125, copilot: 193 }
 
-export class Copilot {
+export class Hotkey {
 	pressed = new Set<number>()
 	pending: InputEvent[] = []
 	hidden = new Set<number>()
@@ -13,6 +13,7 @@ export class Copilot {
 		private emit: (event: InputEvent) => void,
 		private start: () => void,
 		private stop: () => void,
+		private keycode = key.copilot,
 	) {}
 
 	feed(event: InputEvent) {
@@ -29,7 +30,7 @@ export class Copilot {
 		if (event.type !== 1) return
 		if (event.value === 1) this.pressed.add(event.code)
 		if (event.value === 0) this.pressed.delete(event.code)
-		if (event.code === key.copilot) {
+		if (event.code === this.keycode) {
 			if (event.value === 1 && !this.active) {
 				this.pending.forEach((item) => this.hidden.add(item.code))
 				this.pending = []
@@ -46,7 +47,11 @@ export class Copilot {
 			if (event.value === 0) this.hidden.delete(event.code)
 			return
 		}
-		if ([key.super, key.shift].includes(event.code) && event.value === 1) {
+		if (
+			this.keycode === key.copilot &&
+			[key.super, key.shift].includes(event.code) &&
+			event.value === 1
+		) {
 			this.pending.push(event)
 			return
 		}

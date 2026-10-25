@@ -9,11 +9,20 @@ test("source setup creates a service using Bun and the CLI entrypoint", async ()
 	try {
 		const config = join(directory, "config/voice.json")
 		const unit = join(directory, "systemd/voice.service")
-		await runSetup("configure", ["/dev/input/by-id/copilot-event-kbd", config, unit])
+		await runSetup("configure", ["/dev/input/by-id/keyboard-event-kbd", config, unit, "58"])
 		const service = await Bun.file(unit).text()
 		expect(service).toContain(process.execPath)
 		expect(service).toContain('cli.ts" "start"')
-		expect((await Bun.file(config).json()).language).toBe(null)
+		expect(await Bun.file(config).json()).toEqual({
+			keyboard: "/dev/input/by-id/keyboard-event-kbd",
+			keycode: 58,
+			language: null,
+		})
+		for (const code of ["0", "768", "-1", "1.5", "invalid", ""]) {
+			await expect(
+				runSetup("configure", ["/dev/input/by-id/keyboard-event-kbd", config, unit, code]),
+			).rejects.toThrow("Invalid dictation key code")
+		}
 		await expect(runSetup("invalid", [])).rejects.toThrow("Invalid")
 		await expect(runSetup("configure", [])).rejects.toThrow("Invalid")
 	} finally {

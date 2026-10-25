@@ -35,7 +35,7 @@ export class Dictation {
 		const job: Job = { recording, done: false }
 		this.active = job
 		this.jobs.push(job)
-		console.info("Recording (up to 30 seconds); release Copilot to paste")
+		console.info("Recording (up to 30 seconds); release your dictation key to paste")
 		// Handle capture errors immediately, even while an earlier job is transcribing.
 		const captured = recording.result
 			.then(

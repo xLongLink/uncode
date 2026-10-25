@@ -20,9 +20,9 @@ export function encodeEvent(event: InputEvent) {
 	return bytes
 }
 
-export function openKeyboard(device: string, checkOnly?: false): Keyboard
-export function openKeyboard(device: string, checkOnly: true): undefined
-export function openKeyboard(device: string, checkOnly = false) {
+export function openKeyboard(device: string, checkOnly?: false, keycode?: number): Keyboard
+export function openKeyboard(device: string, checkOnly: true, keycode?: number): undefined
+export function openKeyboard(device: string, checkOnly = false, keycode = key.copilot) {
 	if (process.platform !== "linux" || !["x64", "arm64"].includes(process.arch))
 		throw new Error("Voice supports 64-bit x86/ARM Linux only")
 	const library = dlopen("libc.so.6", {
@@ -44,10 +44,8 @@ export function openKeyboard(device: string, checkOnly = false) {
 	const codes = Buffer.alloc(96)
 	// EVIOCGBIT(EV_KEY, 96): read this keyboard's advertised key bitmap.
 	ioctl(keyboard, 0x80604521, ptr(codes))
-	if (!(codes[key.copilot >> 3] & (1 << (key.copilot & 7))))
-		throw new Error(
-			"Selected keyboard does not advertise F23; select the Copilot keyboard device",
-		)
+	if (!(codes[keycode >> 3] & (1 << (keycode & 7))))
+		throw new Error(`Selected keyboard does not advertise key code ${keycode}`)
 	if (checkOnly) {
 		closeSync(output)
 		closeSync(keyboard)

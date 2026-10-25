@@ -2,6 +2,7 @@ import { expect, test } from "bun:test"
 import { chmod, mkdir, mkdtemp, rm, symlink } from "node:fs/promises"
 import { basename, join } from "node:path"
 import { buildRelease } from "../release.ts"
+import { encodeEvent } from "../src/keyboard.ts"
 
 test("compiled release works without Bun, source files, or the working directory", async () => {
 	await mkdir("/tmp/opencode", { recursive: true })
@@ -43,9 +44,15 @@ test("compiled release works without Bun, source files, or the working directory
 		const config = join(directory, "config/voice.json")
 		const unit = join(directory, "systemd/uncode-voice.service")
 		const keyboard = "/dev/input/by-id/copilot-event-kbd"
-		const configure = run("setup", "configure", keyboard, config, unit)
+		const device = join(directory, "keyboard-events")
+		await Bun.write(device, encodeEvent({ type: 1, code: 58, value: 1 }))
+		const detected = run("setup", "detect", device)
+		expect(detected.exitCode).toBe(0)
+		expect(detected.stdout.toString().trim()).toBe(`${device}\t58`)
+		expect(detected.stderr.toString()).toContain("Press the key you want")
+		const configure = run("setup", "configure", keyboard, config, unit, "58")
 		expect(configure.exitCode).toBe(0)
-		expect(await Bun.file(config).json()).toEqual({ keyboard, language: null })
+		expect(await Bun.file(config).json()).toEqual({ keyboard, keycode: 58, language: null })
 		const service = await Bun.file(unit).text()
 		expect(service).toContain(`ExecStart="${executable}" "start"`)
 		expect(service).not.toContain(".ts")
@@ -95,7 +102,15 @@ test("compiled release works without Bun, source files, or the working directory
 			const installedConfig = join(configHome, "uncode-voice.json")
 			expect(
 				Bun.spawnSync(
-					[installed, "setup", "configure", keyboard, installedConfig, installedUnit],
+					[
+						installed,
+						"setup",
+						"configure",
+						keyboard,
+						installedConfig,
+						installedUnit,
+						"58",
+					],
 					{ env },
 				).exitCode,
 			).toBe(0)

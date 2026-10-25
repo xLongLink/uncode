@@ -15,27 +15,27 @@ afterEach(async () => {
 	await rm(directory, { recursive: true, force: true })
 })
 
-test("detects the keyboard receiving Copilot, ignoring other keys and releases", async () => {
+test("detects the selected key and keyboard, ignoring releases and repeats", async () => {
 	const first = `${directory}/first`
 	const second = `${directory}/second`
 	await Bun.write(
 		first,
 		Buffer.concat([
-			encodeEvent({ type: 1, code: key.shift, value: 1 }),
+			encodeEvent({ type: 4, code: 4, value: 1 }),
 			encodeEvent({ type: 1, code: key.copilot, value: 0 }),
 			encodeEvent({ type: 1, code: key.copilot, value: 2 }),
 		]),
 	)
-	await Bun.write(second, encodeEvent({ type: 1, code: key.copilot, value: 1 }))
-	expect(await detectKeyboard([first, second])).toBe(second)
+	await Bun.write(second, encodeEvent({ type: 1, code: 58, value: 1 }))
+	expect(await detectKeyboard([first, second])).toEqual({ keyboard: second, keycode: 58 })
 })
 
-test("waits for a new Copilot press", async () => {
+test("waits for a new key press", async () => {
 	const device = `${directory}/keyboard`
 	await Bun.write(device, "")
 	const result = detectKeyboard([device], 1000)
-	await appendFile(device, encodeEvent({ type: 1, code: key.copilot, value: 1 }))
-	expect(await result).toBe(device)
+	await appendFile(device, encodeEvent({ type: 1, code: key.shift, value: 1 }))
+	expect(await result).toEqual({ keyboard: device, keycode: key.shift })
 })
 
 test("deduplicates stable aliases and prefers the first path", async () => {
@@ -43,13 +43,16 @@ test("deduplicates stable aliases and prefers the first path", async () => {
 	const alias = `${directory}/alias`
 	await Bun.write(device, encodeEvent({ type: 1, code: key.copilot, value: 1 }))
 	await symlink(device, alias)
-	expect(await detectKeyboard([alias, device])).toBe(alias)
+	expect(await detectKeyboard([alias, device])).toEqual({ keyboard: alias, keycode: key.copilot })
 })
 
 test("skips unavailable devices", async () => {
 	const device = `${directory}/keyboard`
 	await Bun.write(device, encodeEvent({ type: 1, code: key.copilot, value: 1 }))
-	expect(await detectKeyboard([`${directory}/missing`, device])).toBe(device)
+	expect(await detectKeyboard([`${directory}/missing`, device])).toEqual({
+		keyboard: device,
+		keycode: key.copilot,
+	})
 })
 
 test("fails clearly when no device can be opened", async () => {
@@ -61,5 +64,5 @@ test("fails clearly when no device can be opened", async () => {
 test("times out instead of waiting indefinitely for an unsupported keyboard", async () => {
 	const device = `${directory}/keyboard`
 	await Bun.write(device, "")
-	await expect(detectKeyboard([device], 20)).rejects.toThrow("set VOICE_KEYBOARD explicitly")
+	await expect(detectKeyboard([device], 20)).rejects.toThrow("No key press detected")
 })
