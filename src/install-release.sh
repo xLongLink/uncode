@@ -3,7 +3,12 @@ set -euo pipefail
 
 main() {
     version='@VERSION@'
-    if [[ "$(uname -s)" != Linux || "${XDG_SESSION_TYPE:-}" != wayland ]]; then
+    action='@ACTION@'
+    if [[ "$(uname -s)" != Linux ]]; then
+        printf 'Uncode supports Linux only.\n' >&2
+        exit 1
+    fi
+    if [[ "$action" == install && "${XDG_SESSION_TYPE:-}" != wayland ]]; then
         printf 'Run the installer from your Ubuntu/Debian Wayland desktop.\n' >&2
         exit 1
     fi
@@ -30,7 +35,7 @@ main() {
     fi
     (cd "$download" && sha256sum --check "$name.sha256")
     chmod +x "$download/$name"
-    "$download/$name" install
+    "$download/$name" "$action"
 }
 
 main "$@"

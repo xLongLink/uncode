@@ -11,6 +11,12 @@ test("compiled release works without Bun, source files, or the working directory
 		const installer = await Bun.file(join(directory, "install.sh")).text()
 		expect(installer).toContain("version='v1.2.3-rc.1'")
 		expect(installer).not.toContain("@VERSION@")
+		expect(installer).toContain("action='install'")
+		const uninstaller = await Bun.file(join(directory, "uninstall.sh")).text()
+		expect(uninstaller).toContain("version='v1.2.3-rc.1'")
+		expect(uninstaller).toContain("action='uninstall'")
+		expect(uninstaller).not.toContain("@VERSION@")
+		expect(uninstaller).not.toContain("@ACTION@")
 		expect(basename(executable)).toBe(`uncode-linux-${process.arch}`)
 		const env = { ...process.env, PATH: "", BUN_BE_BUN: undefined }
 		const run = (...args: string[]) =>

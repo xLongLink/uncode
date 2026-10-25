@@ -62,9 +62,9 @@ afterEach(async () => {
 	await rm(directory, { recursive: true, force: true })
 })
 
-async function runInstaller() {
+async function runInstaller(action = "install") {
 	const child = Bun.spawn(["bash"], {
-		stdin: Buffer.from(script),
+		stdin: Buffer.from(script.replaceAll("@ACTION@", action)),
 		env,
 		stdout: "pipe",
 		stderr: "pipe",
@@ -84,7 +84,19 @@ for (const arch of ["x86_64", "aarch64"]) {
 		expect((await runInstaller()).code).toBe(0)
 		expect(await Bun.file(join(directory, "executed")).text()).toBe("install\n")
 	})
+	test(`curl uninstaller selects ${arch} and works without a Wayland session`, async () => {
+		env.TEST_ARCH = arch
+		delete env.XDG_SESSION_TYPE
+		expect((await runInstaller("uninstall")).code).toBe(0)
+		expect(await Bun.file(join(directory, "executed")).text()).toBe("uninstall\n")
+	})
 }
+
+test("curl uninstaller verifies the binary before executing it", async () => {
+	await Bun.write(join(directory, "assets/uncode-linux-x64"), "corrupted")
+	expect((await runInstaller("uninstall")).code).not.toBe(0)
+	expect(await Bun.file(join(directory, "executed")).exists()).toBe(false)
+})
 
 test("curl installer rejects a corrupted binary without executing it", async () => {
 	await Bun.write(join(directory, "assets/uncode-linux-x64"), "corrupted")

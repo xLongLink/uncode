@@ -35,10 +35,15 @@ export async function buildRelease(version: string, output: string, arch: string
 			.digest("hex")
 		await rename(staged, executable)
 		await Bun.write(`${executable}.sha256`, `${digest}  ${basename(executable)}\n`)
-		const installer = (
+		const script = (
 			await Bun.file(join(import.meta.dir, "install-release.sh")).text()
 		).replaceAll("@VERSION@", version)
-		await Bun.write(join(destination, "install.sh"), installer)
+		for (const action of ["install", "uninstall"]) {
+			await Bun.write(
+				join(destination, `${action}.sh`),
+				script.replaceAll("@ACTION@", action),
+			)
+		}
 		return executable
 	} finally {
 		await rm(staging, { recursive: true, force: true })

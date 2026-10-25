@@ -49,6 +49,7 @@ jobs:
           path: |
             src/dist/uncode-linux-${{ matrix.arch }}*
             src/dist/install.sh
+            src/dist/uninstall.sh
           if-no-files-found: error
 
   release:
