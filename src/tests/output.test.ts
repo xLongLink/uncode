@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test"
-import { mkdtemp, chmod, rm } from "node:fs/promises"
+import { mkdir, mkdtemp, chmod, rm } from "node:fs/promises"
 import { captureAudio } from "../src/microphone.ts"
 import { muteOutput } from "../src/output.ts"
 
@@ -8,6 +8,7 @@ let previousPath: string | undefined
 let warning: ReturnType<typeof spyOn<typeof console, "warn">>
 
 beforeEach(async () => {
+	await mkdir("/tmp/opencode", { recursive: true })
 	directory = await mkdtemp("/tmp/opencode/voice-output-")
 	previousPath = process.env.PATH
 	warning = spyOn(console, "warn").mockImplementation(() => {})

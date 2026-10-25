@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, spyOn, test } from "bun:test"
-import { chmod, mkdtemp, rm } from "node:fs/promises"
+import { chmod, mkdir, mkdtemp, rm } from "node:fs/promises"
 import { pasteText } from "../src/paste.ts"
 import { key, type InputEvent } from "../src/hotkey.ts"
 
@@ -9,6 +9,7 @@ let info: ReturnType<typeof spyOn<typeof console, "info">>
 let warning: ReturnType<typeof spyOn<typeof console, "warn">>
 
 beforeEach(async () => {
+	await mkdir("/tmp/opencode", { recursive: true })
 	directory = await mkdtemp("/tmp/opencode/voice-paste-")
 	previousPath = process.env.PATH
 	info = spyOn(console, "info").mockImplementation(() => {})

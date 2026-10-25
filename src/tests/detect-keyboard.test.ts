@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test"
-import { appendFile, mkdtemp, rm, symlink } from "node:fs/promises"
+import { appendFile, mkdir, mkdtemp, rm, symlink } from "node:fs/promises"
 import { detectKeyboard } from "../src/detect-keyboard.ts"
 import { encodeEvent } from "../src/keyboard.ts"
 import { key } from "../src/hotkey.ts"
@@ -7,6 +7,7 @@ import { key } from "../src/hotkey.ts"
 let directory: string
 
 beforeEach(async () => {
+	await mkdir("/tmp/opencode", { recursive: true })
 	directory = await mkdtemp("/tmp/opencode/voice-keyboard-")
 })
 
