@@ -5,7 +5,7 @@
 
 
 <h3 >
-Local voice dictation for your desktop.
+Local voice dictation for Linux
 </h3 >
 
 Hold Copilot to record; release to transcribe locally and paste. Powered by [Whistle](https://cactuscompute.com/blog/whistle) (16.9 MB).
