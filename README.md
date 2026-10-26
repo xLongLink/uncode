@@ -8,7 +8,7 @@
 Local voice dictation for Linux
 </h3 >
 
-Hold Copilot to record; release to transcribe locally and paste. Powered by [Whistle](https://cactuscompute.com/blog/whistle) (16.9 MB).
+Hold to record; release to transcribe and paste. Powered by [Whistle](https://cactuscompute.com/blog/whistle) (16.9 MB).
 
 [![Release](https://img.shields.io/github/v/release/xLongLink/uncode)](https://github.com/xLongLink/uncode/releases/latest)
 [![Release workflow](https://github.com/xLongLink/uncode/actions/workflows/release.yml/badge.svg)](https://github.com/xLongLink/uncode/actions/workflows/release.yml)
@@ -16,6 +16,16 @@ Hold Copilot to record; release to transcribe locally and paste. Powered by [Whi
 
 
 </div>
+
+<br />
+
+## Features
+
+- 🎙️ **Hold to record**: Press and hold a key to record; release to transcribe and paste the text.
+- 🔇 **Automatic audio muting**: System audio is muted while recording, so you can dictate even while listening to music.
+- 🔒 **Entirely local**: Runs on your machine, with no cloud required.
+- 🐧 **Ubuntu tested**: Tested on Ubuntu 26.04.
+- ⏱️ **Up to 30 seconds**: Record clips up to Whistle's 30-second limit.
 
 <br />
 
